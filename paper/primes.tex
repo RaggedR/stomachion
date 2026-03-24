@@ -383,17 +383,17 @@ remaining prime: it has \emph{many different optional decompositions},
 none of which is forced but each of which contributes a multiplicative
 family of solutions.
 
-% FIGURE PLACEHOLDER: canonical Stomachion tiling on 12x12 grid,
-% showing all 14 labeled pieces with vertices at integer lattice points.
-% \begin{figure}[ht]
-%   \centering
-%   \includegraphics[width=0.5\textwidth]{stomachion_canonical.pdf}
-%   \caption{The canonical Stomachion dissection on the $12 \times 12$
-%     integer grid. All 14 pieces have vertices at lattice points.
-%     The dissection is prime: no straight line from boundary to boundary
-%     avoids all piece interiors.}
-%   \label{fig:stomachion}
-% \end{figure}
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.45\textwidth]{figures/stomachion.png}
+  \caption{The canonical Stomachion dissection on the $12 \times 12$
+    integer grid. All 14 pieces have vertices at lattice points.
+    The dissection is prime: no straight line from boundary to boundary
+    avoids all piece interiors. Note the diversity of piece shapes
+    (11~triangles, 2~quadrilaterals, 1~pentagon) and the balanced
+    size distribution (largest piece is $17\%$ of total area).}
+  \label{fig:stomachion}
+\end{figure}
 
 \subsection{Distribution of tiling counts for random dissections}
 \label{sec:distribution}
@@ -501,7 +501,43 @@ $46\%$ at $n = 10$, reaching just $6\%$ for the Stomachion.
 As dissections grow more complex, optional fault lines become
 increasingly likely, and a larger share of the flexibility arises from
 the multiplicative coproduct structure rather than from genuine
-entanglement.
+entanglement. Table~\ref{tab:irred_detail} gives the full distribution
+of irreducible counts.
+
+\begin{table}[ht]
+\centering
+\caption{Detailed frequency data for irreducible (fault-free) tiling
+  counts. Note the concentration on powers of two and the growing
+  fraction with zero irreducible tilings (all solutions decompose).
+  The irreducible count $0$ means every tiling of that dissection
+  has at least one optional fault line.}
+\label{tab:irred_detail}
+\medskip
+\begin{tabular}{@{}r rrrrrrrr@{}}
+\toprule
+Irred.\ &
+\multicolumn{1}{c}{$n\!=\!3$} &
+\multicolumn{1}{c}{$n\!=\!4$} &
+\multicolumn{1}{c}{$n\!=\!5$} &
+\multicolumn{1}{c}{$n\!=\!6$} &
+\multicolumn{1}{c}{$n\!=\!7$} &
+\multicolumn{1}{c}{$n\!=\!8$} &
+\multicolumn{1}{c}{$n\!=\!9$} &
+\multicolumn{1}{c}{$n\!=\!10$} \\
+\midrule
+  0 &  14 &  18 &  19 &  27 &  28 &  35 &  37 &  40 \\
+  1 & 136 &  89 &  58 &  33 &  25 &  14 &   8 &   5 \\
+  2 & 139 & 155 & 165 & 149 & 132 & 112 & 100 &  85 \\
+  4 &  11 &  36 &  53 &  80 &  95 & 113 & 114 & 111 \\
+  6 & --- & --- &   1 &   1 &   2 &   2 &   3 & --- \\
+  8 & --- &   2 &   4 &   8 &  15 &  17 &  25 &  35 \\
+ 12 & --- & --- & --- & --- & --- & --- &   1 &   1 \\
+ 16 & --- & --- & --- &   1 &   1 &   2 &   3 &   3 \\
+ 32 & --- & --- & --- & --- & --- & --- & --- &   1 \\
+ 48 & --- & --- & --- & --- & --- & --- & --- &   1 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Several additional patterns are immediately apparent.
 
@@ -536,17 +572,16 @@ Several additional patterns are immediately apparent.
   different values of~$n$.
 \end{enumerate}
 
-% FIGURE PLACEHOLDER: histogram of log2(tiling count) for n=8 and n=10,
-% showing the spike structure at integer values (powers of 2).
-% \begin{figure}[ht]
-%   \centering
-%   \includegraphics[width=0.7\textwidth]{distribution_histogram.pdf}
-%   \caption{Distribution of $\log_2(\text{tiling count})$ for random
-%     $n$-piece dissections at $n = 8$ (left) and $n = 10$ (right).
-%     The concentration at integer values reflects the power-of-two
-%     structure.}
-%   \label{fig:histogram}
-% \end{figure}
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/champions.png}
+  \caption{Champion prime dissections for $n = 3$ through $n = 8$.
+    Numbers inside each piece indicate area. All champions are generated
+    by sequential lattice-point cuts, producing only convex pieces.
+    Note the increasingly unbalanced piece distributions: each champion
+    has a dominant piece ($\geq 30\%$ of area) with small satellites.}
+  \label{fig:champions}
+\end{figure}
 
 \subsection{Reducible dissections easily beat 536}
 \label{sec:reducible}
@@ -670,7 +705,7 @@ the Poisson law. The Stomachion is a $4$--$5$ sigma outlier.
 \label{sec:anatomy}
 
 Applying the forced/optional fault-line analysis of
-Section~\ref{sec:stomachion_verify} to each of the $17{,}152$ raw
+Section~\ref{sec:verification} to each of the $17{,}152$ raw
 solutions individually reveals a striking decomposition. We checked
 every solution for optional fault lines along $y = k$, $x = k$
 ($k = 1, \ldots, 11$) and the diagonals $y = x$, $y = 12 - x$.
@@ -707,6 +742,24 @@ decomposition into two independent halves. The $32$ fault-free tilings
 form the irreducible core---the configurations where all $14$~pieces
 are genuinely interlocked with no line of separation.
 
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/stomachion_irreducible.png}
+  \caption{Irreducible Stomachion tilings \#1--16 (of 32 total). No
+    straight line from boundary to boundary separates the pieces.}
+  \label{fig:irreducible_a}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.92\textwidth]{figures/stomachion_irreducible_2.png}
+  \caption{Irreducible Stomachion tilings \#17--32. Together with
+    Figure~\ref{fig:irreducible_a}, these are all $32$ fault-free tilings
+    of the Stomachion. Every piece occupies genuinely different positions
+    across the $32$ configurations.}
+  \label{fig:irreducible_b}
+\end{figure}
+
 \subsection{The $n = 13$ champion: a counterpoint}
 \label{sec:n13}
 
@@ -742,6 +795,17 @@ the Stomachion moves all $14$ pieces: with $2{,}144$ tilings, it is
 impossible for any single piece (at most $17\%$ of the area) to remain
 fixed.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/n13_champion.png}
+  \caption{Sixteen of the $120$ tilings of the $n = 13$ champion prime
+    dissection. All $120$ are irreducible (no optional fault lines),
+    but only $7$ of $13$ pieces participate---the remaining $6$ are
+    frozen in place. The pieces are all elongated convex triangles,
+    lacking the shape diversity of the Stomachion.}
+  \label{fig:n13}
+\end{figure}
+
 \subsection{The multi-axis view}
 \label{sec:multiaxis}
 
@@ -759,14 +823,26 @@ dissections that beat it on any one axis invariably fail on the others:
   at $n \geq 10$ in random search, but always with low tiling counts.
 \end{enumerate}
 
+There is also an axis that resists quantification:
+\emph{aesthetic quality}. The Stomachion's pieces arise from the natural
+construction lines of the square---diagonals, midlines, and their
+intersections---producing shapes with visual harmony and a pleasing
+variety of triangles, quadrilaterals, and a pentagon
+(Figure~\ref{fig:stomachion}). The champion primes found by random
+search are, without exception, visually unappealing: elongated slivers,
+lopsided triangles, no diversity of shape (Figures~\ref{fig:champions}
+and~\ref{fig:n13}). They achieve flexibility through geometric
+coincidence but not through geometric elegance.
+
 The Stomachion appears to be the unique dissection that scores
 well on \emph{all} axes simultaneously: high total count, nontrivial
-irreducible core, full participation, balanced piece sizes, and
-diversity of piece shapes. It achieves this through the elegant
-mechanism of optional fault lines: the natural construction lines of
-the square create a web of potential decompositions that collectively
-generate $536$ tilings, of which $32$ are genuinely irreducible and all
-$14$ pieces participate across the full solution space.
+irreducible core, full participation, balanced piece sizes,
+diversity of piece shapes, and aesthetic coherence. It achieves this
+through the elegant mechanism of optional fault lines: the natural
+construction lines of the square create a web of potential
+decompositions that collectively generate $536$ tilings, of which $32$
+are genuinely irreducible and all $14$ pieces participate across the
+full solution space.
 
 %% ===================================================================
 \section{The Poisson Conjecture}
