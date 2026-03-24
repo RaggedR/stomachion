@@ -1,6 +1,7 @@
 node_modules/
-solver/
-paper/
-*.png
-package.json
+__pycache__/
+*.aux
+*.log
+*.out
+.DS_Store
 package-lock.json
