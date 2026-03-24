@@ -1127,9 +1127,7 @@ function renderHist() {
     svg.appendChild(lbl);
   });
 
-  // Stats line
-  const totalN = Object.values(totalDist).reduce((s, v) => s + v, 0);
-  const irredN = Object.values(irredDist).reduce((s, v) => s + v, 0);
+  // Stats line (totalN and irredN already declared above)
   const totalMean = totalN > 0
     ? Object.entries(totalDist).reduce((s, [k, v]) => s + Number(k) * v, 0) / totalN
     : 0;
