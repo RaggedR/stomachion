@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify solver
+        run: |
+          cd solver
+          python -c "
+          from geometry import shoelace2, area2, rasterize, orientations, normalize
+          from stomachion import PIECE_VERTS, PIECE_AREAS
+          # Verify piece areas
+          for i, v in enumerate(PIECE_VERTS):
+              assert area2(v) == PIECE_AREAS[i], f'Piece {i} area mismatch'
+          # Verify canonical tiling covers all cells
+          res = 2
+          all_cells = set()
+          for v in PIECE_VERTS:
+              all_cells |= rasterize(v, res)
+          assert len(all_cells) == (12*res)**2, f'Coverage: {len(all_cells)} != {(12*res)**2}'
+          print('All checks passed')
+          "
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: |
+          if [ -f "./scripts/deploy.sh" ]; then
+            chmod +x ./scripts/deploy.sh
+            ./scripts/deploy.sh
+          else
+            echo "No deploy script found, skipping deploy"
+          fi
