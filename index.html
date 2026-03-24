@@ -1012,11 +1012,17 @@ function renderHist() {
   const cw = W - pad.left - pad.right;
   const ch = H - pad.top - pad.bottom;
 
-  // Find max frequency
+  // Normalize to rates (different sample sizes: 500 total, 300 irred)
+  const totalN = Object.values(totalDist).reduce((s, v) => s + v, 0) || 1;
+  const irredN = Object.values(irredDist).reduce((s, v) => s + v, 0) || 1;
+  const totalRate = (k) => (totalDist[k] || 0) / totalN;
+  const irredRate = (k) => (irredDist[k] || 0) / irredN;
+
+  // Find max rate
   const maxFreq = Math.max(
-    ...buckets.map(k => totalDist[k] || 0),
-    ...buckets.map(k => irredDist[k] || 0),
-    1
+    ...buckets.map(k => totalRate(k)),
+    ...buckets.map(k => irredRate(k)),
+    0.01
   );
 
   // Use log-spaced positions for x-axis since values span 1-336
@@ -1050,7 +1056,7 @@ function renderHist() {
       lbl.setAttribute('text-anchor', 'end');
       lbl.setAttribute('font-size', '9'); lbl.setAttribute('fill', 'rgba(255,255,255,0.3)');
       lbl.setAttribute('font-family', 'Inter, sans-serif');
-      lbl.textContent = Math.round(v);
+      lbl.textContent = (v * 100).toFixed(0) + '%';
       svg.appendChild(lbl);
     }
   }
@@ -1062,7 +1068,7 @@ function renderHist() {
   yLabel.setAttribute('fill', 'rgba(255,255,255,0.35)');
   yLabel.setAttribute('font-family', 'Inter, sans-serif');
   yLabel.setAttribute('transform', `rotate(-90, 12, ${pad.top + ch / 2})`);
-  yLabel.textContent = 'number of dissections';
+  yLabel.textContent = 'fraction of dissections';
   svg.appendChild(yLabel);
 
   // X-axis label
@@ -1077,19 +1083,19 @@ function renderHist() {
   const hasIrred = buckets.some(k => (irredDist[k] || 0) > 0);
   const halfBar = hasIrred ? barW / 2 - 1 : barW;
 
-  // Draw bars
+  // Draw bars (using normalized rates)
   buckets.forEach((k, i) => {
-    const tv = totalDist[k] || 0;
-    const iv = irredDist[k] || 0;
+    const tr = totalRate(k);
+    const ir = irredRate(k);
     const x = xOf(i);
 
     // Total bar
-    if (tv > 0) {
+    if (tr > 0) {
       const rect = document.createElementNS(NS, 'rect');
       rect.setAttribute('x', x);
-      rect.setAttribute('y', yOf(tv));
+      rect.setAttribute('y', yOf(tr));
       rect.setAttribute('width', hasIrred ? halfBar : barW);
-      rect.setAttribute('height', (tv / maxFreq) * ch);
+      rect.setAttribute('height', (tr / maxFreq) * ch);
       rect.setAttribute('fill', '#d4915e');
       rect.setAttribute('rx', 1.5);
       rect.setAttribute('opacity', '0.85');
@@ -1097,12 +1103,12 @@ function renderHist() {
     }
 
     // Irreducible bar
-    if (iv > 0) {
+    if (ir > 0) {
       const rect = document.createElementNS(NS, 'rect');
       rect.setAttribute('x', x + halfBar + 2);
-      rect.setAttribute('y', yOf(iv));
+      rect.setAttribute('y', yOf(ir));
       rect.setAttribute('width', halfBar);
-      rect.setAttribute('height', (iv / maxFreq) * ch);
+      rect.setAttribute('height', (ir / maxFreq) * ch);
       rect.setAttribute('fill', '#6ba37a');
       rect.setAttribute('rx', 1.5);
       rect.setAttribute('opacity', '0.85');
