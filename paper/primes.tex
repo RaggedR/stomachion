@@ -539,6 +539,26 @@ Irred.\ &
 \end{tabular}
 \end{table}
 
+Figure~\ref{fig:histograms} shows the full distributions visually.
+The amber bars represent total geometric tilings; the green bars
+represent irreducible (fault-free) tilings only. As $n$ increases,
+the distribution shifts rightward, the tail lengthens, and the
+gap between total and irreducible widens---reflecting the growing
+role of fault-line-mediated flexibility.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{figures/histograms.png}
+  \caption{Distribution of geometric tiling counts for random $n$-piece
+    convex lattice dissections of the $12 \times 12$ square ($500$~trials
+    per~$n$). Amber bars: total geometric tilings. Green bars: irreducible
+    (fault-free) tilings only. The $x$-axis shows the number of solutions;
+    the $y$-axis shows the fraction of dissections. Note the concentration
+    on powers of two and the growing gap between total and irreducible
+    counts as $n$ increases.}
+  \label{fig:histograms}
+\end{figure}
+
 Several additional patterns are immediately apparent.
 
 \begin{enumerate}[label=(\arabic*)]
@@ -651,6 +671,27 @@ $n$ & Max prime count & Notes \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+Figure~\ref{fig:n13champion} shows 16 of the 120 tilings of the
+$n = 13$ champion. Despite having nearly as many pieces as the
+Stomachion, this dissection is visually degenerate: it consists almost
+entirely of long, thin triangles converging to a point, with no
+resemblance to the balanced, ``designed'' feel of the Stomachion.
+Yet every one of its 120~tilings is irreducible. The contrast
+underscores that high tiling counts among prime dissections can arise
+from very different geometric mechanisms.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/n13_champion.png}
+  \caption{Sixteen of the 120~tilings of the $n = 13$ champion prime
+    dissection---all irreducible. The dissection consists of long, thin
+    triangles converging near a corner, producing high flexibility through
+    edge-length coincidences despite its visually degenerate geometry.
+    Compare with the balanced structure of the Stomachion
+    (Figure~\ref{fig:stomachion}).}
+  \label{fig:n13champion}
+\end{figure}
 
 The gap between the random-sampling champions at $n = 10$ (at most~$336$)
 and the Stomachion at $n = 14$ ($2{,}144$) is enormous---a factor of
