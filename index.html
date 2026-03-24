@@ -114,7 +114,7 @@ g.piece.won { animation: victory 2s ease-in-out infinite; }
   <button onclick="solve()">Solve</button>
   <button onclick="toggleGrid()">Grid</button>
 </div>
-<p class="hint">click a piece, then rotate/flip &middot; drag to place &middot; right-click to rotate</p>
+<p class="hint">drag to place &middot; <b>R</b> = rotate &middot; <b>F</b> = flip &middot; scroll wheel or right-click also rotate</p>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -658,18 +658,24 @@ document.addEventListener('keydown', e => {
   if (idx < 0) return;
 
   if (e.key === 'r' || e.key === 'R') {
+    const p = pieces[idx];
+    const ox = p.x, oy = p.y;
     rotatePiece(idx);
+    if (dragIdx >= 0) { dragOx -= p.x - ox; dragOy -= p.y - oy; }
     e.preventDefault();
   } else if (e.key === 'f' || e.key === 'F') {
+    const p = pieces[idx];
+    const ox = p.x, oy = p.y;
     flipPiece(idx);
+    if (dragIdx >= 0) { dragOx -= p.x - ox; dragOy -= p.y - oy; }
     e.preventDefault();
   }
 });
 
-// Right-click to rotate
+// Right-click to rotate (disabled during drag)
 document.getElementById('svg').addEventListener('contextmenu', e => {
   e.preventDefault();
-  if (solved) return;
+  if (solved || dragIdx >= 0) return;
   const g = e.target.closest('g.piece');
   if (!g) return;
   const idx = parseInt(g.dataset.id);
@@ -677,10 +683,10 @@ document.getElementById('svg').addEventListener('contextmenu', e => {
   rotatePiece(idx);
 });
 
-// Scroll wheel to rotate selected/hovered piece
+// Scroll wheel to rotate selected/hovered piece (disabled during drag)
 document.getElementById('svg').addEventListener('wheel', e => {
   e.preventDefault();
-  if (solved) return;
+  if (solved || dragIdx >= 0) return;
   // Rotate whichever piece the cursor is over, or the selected one
   let idx = selected;
   const g = e.target.closest('g.piece');
