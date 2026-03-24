@@ -207,6 +207,8 @@ let selected = -1, dragIdx = -1;
 let dragOx = 0, dragOy = 0, dragMoved = false;
 let bitmap = new Uint8Array(FG * FG);
 let gridOn = true, solved = false;
+let wheelAccum = 0;
+const WHEEL_THRESH = 60;
 
 // SVG element refs
 let els = [];      // { g, poly, label } per piece
@@ -687,7 +689,6 @@ document.getElementById('svg').addEventListener('contextmenu', e => {
 document.getElementById('svg').addEventListener('wheel', e => {
   e.preventDefault();
   if (solved || dragIdx >= 0) return;
-  // Rotate whichever piece the cursor is over, or the selected one
   let idx = selected;
   const g = e.target.closest('g.piece');
   if (g) {
@@ -695,11 +696,14 @@ document.getElementById('svg').addEventListener('wheel', e => {
     selected = idx;
   }
   if (idx < 0) return;
-  if (e.deltaY > 0) {
-    rotatePiece(idx);
-  } else {
-    // Rotate CCW = 3× CW
-    rotatePiece(idx); rotatePiece(idx); rotatePiece(idx);
+  wheelAccum += e.deltaY;
+  if (Math.abs(wheelAccum) >= WHEEL_THRESH) {
+    if (wheelAccum > 0) {
+      rotatePiece(idx);
+    } else {
+      rotatePiece(idx); rotatePiece(idx); rotatePiece(idx);
+    }
+    wheelAccum = 0;
   }
 }, { passive: false });
 
