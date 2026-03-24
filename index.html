@@ -961,16 +961,16 @@ const HIST_DATA = {
     9: {1:19, 2:175, 3:1, 4:184, 6:5, 8:46, 12:2, 16:15, 18:1, 24:15, 26:1, 32:14, 40:1, 48:4, 64:2, 96:2, 192:1, 336:1},
     10:{1:14, 2:145, 3:1, 4:187, 6:1, 8:56, 12:2, 16:24, 18:1, 24:14, 26:1, 32:17, 40:1, 48:6, 64:2, 72:1, 96:2, 192:2, 336:1},
   },
-  // Irreducible (fault-free) solutions — placeholder, will be filled from experiment
+  // Irreducible (fault-free) solutions — from 300-seed experiment
   irred: {
-    3: {},
-    4: {},
-    5: {},
-    6: {},
-    7: {},
-    8: {},
-    9: {},
-    10:{},
+    3: {0:14, 1:136, 2:139, 4:11},
+    4: {0:18, 1:89, 2:155, 4:36, 8:2},
+    5: {0:19, 1:58, 2:165, 4:53, 6:1, 8:4},
+    6: {0:27, 1:33, 2:149, 4:80, 6:1, 8:8, 16:1},
+    7: {0:28, 1:25, 2:132, 4:95, 6:2, 8:15, 16:1},
+    8: {0:35, 1:14, 2:112, 4:113, 6:2, 8:17, 16:2},
+    9: {0:37, 1:8, 2:100, 4:114, 6:3, 8:25, 12:1, 16:3},
+    10:{0:40, 1:5, 2:85, 4:111, 8:35, 12:1, 16:3, 32:1, 48:1},
   },
 };
 
@@ -1086,7 +1086,7 @@ function renderHist() {
     // Total bar
     if (tv > 0) {
       const rect = document.createElementNS(NS, 'rect');
-      rect.setAttribute('x', hasIrred ? x : x);
+      rect.setAttribute('x', x);
       rect.setAttribute('y', yOf(tv));
       rect.setAttribute('width', hasIrred ? halfBar : barW);
       rect.setAttribute('height', (tv / maxFreq) * ch);
@@ -1111,7 +1111,7 @@ function renderHist() {
 
     // X-axis tick label
     const lbl = document.createElementNS(NS, 'text');
-    lbl.setAttribute('x', x + (hasIrred ? barW / 2 : barW / 2));
+    lbl.setAttribute('x', x + barW / 2);
     lbl.setAttribute('y', pad.top + ch + 14);
     lbl.setAttribute('text-anchor', 'middle');
     lbl.setAttribute('font-size', buckets.length > 12 ? '7' : '8.5');
