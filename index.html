@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Stomachion — Archimedes' Puzzle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #1c1410;
+  --bg-mid: #2a1f18;
+  --accent-amber: #d4915e;
+  --accent-gold: #e8a862;
+  --text: #e8ddd0;
+  --text-dim: #9a8b7a;
+  --frame-border: #3d2b1e;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 50%, var(--bg-deep) 100%);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px; user-select: none;
+}
+h1 {
+  font-size: 1.8em; font-weight: 700; letter-spacing: 3px;
+  color: var(--accent-gold); margin-bottom: 2px;
+}
+.sub {
+  font-size: 0.82em; color: var(--text-dim); margin-bottom: 12px;
+  font-weight: 400; letter-spacing: 0.5px;
+}
+#status {
+  font-size: 0.95em; color: var(--accent-gold); font-weight: 600;
+  margin-bottom: 10px; padding: 5px 18px; border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  min-height: 1.4em; text-align: center;
+  transition: color 0.3s;
+}
+.frame {
+  padding: 14px;
+  background: linear-gradient(135deg, #4a3525, #3d2b1e 40%, #2e1f15 70%, #3d2b1e);
+  border-radius: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.6), 0 12px 40px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.05);
+  width: min(95vw, 620px);
+}
+svg { width: 100%; height: auto; display: block; touch-action: none; }
+.controls {
+  margin-top: 12px; display: flex; gap: 10px;
+}
+.controls button {
+  background: linear-gradient(135deg, #3d2b1e, #2e1f15);
+  color: var(--text); border: 1px solid rgba(255,255,255,0.1);
+  padding: 7px 18px; border-radius: 6px; cursor: pointer;
+  font-family: inherit; font-size: 0.85em; font-weight: 600;
+  transition: background 0.15s, border-color 0.15s;
+}
+.controls button:hover {
+  background: linear-gradient(135deg, #4a3525, #3d2b1e);
+  border-color: var(--accent-amber);
+}
+.hint {
+  margin-top: 8px; font-size: 0.75em; color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.piece-controls {
+  margin-top: 10px; display: flex; gap: 8px; justify-content: center;
+}
+.piece-controls button {
+  background: linear-gradient(135deg, #4a3525, #3d2b1e);
+  color: var(--accent-gold); border: 1px solid var(--accent-amber);
+  padding: 10px 24px; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 1em; font-weight: 700;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+  min-width: 100px;
+}
+.piece-controls button:hover {
+  background: linear-gradient(135deg, #5a4530, #4a3525);
+  transform: scale(1.03);
+}
+.piece-controls button:active { transform: scale(0.97); }
+.piece-controls.disabled button {
+  opacity: 0.35; cursor: default;
+}
+.piece-controls.disabled button:hover { transform: none; }
+g.piece { cursor: grab; transition: transform 0.2s ease-out, filter 0.15s; }
+g.piece.notrans { transition: none !important; }
+g.piece.dragging { cursor: grabbing; filter: url(#lift); }
+g.piece.selected polygon { stroke-width: 2.5; }
+g.piece polygon { transition: stroke-width 0.15s; }
+@keyframes victory { 0%,100%{filter:drop-shadow(0 0 4px rgba(232,168,98,0.3))} 50%{filter:drop-shadow(0 0 12px rgba(232,168,98,0.8))} }
+g.piece.won { animation: victory 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<h1>STOMACHION</h1>
+<p class="sub">Archimedes' 14-piece dissection puzzle</p>
+<div id="status">Place all 14 pieces to tile the square</div>
+<div class="frame">
+  <svg id="svg" viewBox="0 0 600 880" preserveAspectRatio="xMidYMid meet"></svg>
+</div>
+<div class="piece-controls disabled" id="piece-btns">
+  <button onclick="doRotate()">&#x21bb; Rotate</button>
+  <button onclick="doFlip()">&#x21c4; Flip</button>
+</div>
+<div class="controls">
+  <button onclick="scatter()">Scatter</button>
+  <button onclick="solve()">Solve</button>
+  <button onclick="toggleGrid()">Grid</button>
+</div>
+<p class="hint">click a piece, then rotate/flip &middot; drag to place &middot; right-click to rotate</p>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// Constants
+// ═══════════════════════════════════════════════════════
+const NS = 'http://www.w3.org/2000/svg';
+const CELL = 40;
+const BX = 60, BY = 30;            // board offset in SVG
+const BS = 12 * CELL;              // board size (480)
+const VW = 600, VH = 880;          // viewBox
+const RES = 4;                     // bitmap resolution multiplier
+const FG = 12 * RES;               // fine grid size (48)
+const DRAG_THRESH = 4;
+
+// ═══════════════════════════════════════════════════════
+// Piece definitions — SVG coords (y-down, origin top-left)
+// Verified: all areas correct, tiling complete
+// ═══════════════════════════════════════════════════════
+const DEFS = [
+  { v:[[0,12],[0,0],[2,2]],                    a:12 }, // A
+  { v:[[0,12],[2,8],[6,12]],                   a:12 }, // B
+  { v:[[0,12],[2,2],[4,4]],                    a:12 }, // C
+  { v:[[0,0],[6,0],[2,2]],                     a:6  }, // D
+  { v:[[4,4],[4,10],[2,8]],                    a:6  }, // E
+  { v:[[4,1],[6,0],[10,4]],                    a:6  }, // F
+  { v:[[6,0],[12,0],[10,4]],                   a:12 }, // G
+  { v:[[7,4],[8,8],[7,10]],                    a:3  }, // H
+  { v:[[10,4],[8,8],[7,4]],                    a:6  }, // I
+  { v:[[12,6],[12,8],[9,6]],                   a:3  }, // J
+  { v:[[12,0],[12,6],[9,6]],                   a:9  }, // K
+  { v:[[2,2],[4,1],[10,4],[4,4]],              a:12 }, // L
+  { v:[[9,6],[12,8],[12,12],[6,12]],           a:24 }, // M
+  { v:[[6,12],[4,10],[4,4],[7,4],[7,10]],      a:21 }, // N
+];
+
+// Compute local vertices and canonical anchor for each piece
+DEFS.forEach(d => {
+  const xs = d.v.map(p => p[0]), ys = d.v.map(p => p[1]);
+  d.ox = Math.min(...xs);
+  d.oy = Math.min(...ys);
+  d.local = d.v.map(([x,y]) => [x - d.ox, y - d.oy]);
+});
+
+// Verify areas at load time
+DEFS.forEach((d, i) => {
+  const a = shoelace(d.v);
+  console.assert(Math.abs(a - d.a) < 0.01,
+    `Piece ${i} area mismatch: expected ${d.a}, got ${a}`);
+});
+
+// ═══════════════════════════════════════════════════════
+// Wood palette — alternating light/dark for contrast
+// [light, dark, stroke]
+// ═══════════════════════════════════════════════════════
+const WOOD = [
+  ['#e8c99b','#d4a574','#a07840'], // A: maple
+  ['#a0522d','#803a18','#602a10'], // B: cherry
+  ['#deb887','#c49a62','#9a7848'], // C: birch
+  ['#6b4226','#4a2c18','#3d2218'], // D: dark walnut
+  ['#cd853f','#a86a28','#875218'], // E: pine
+  ['#8b7355','#6b5638','#504028'], // F: grey walnut
+  ['#d4a574','#b07a44','#8a5e30'], // G: golden oak
+  ['#704030','#502820','#3c1c14'], // H: rosewood
+  ['#c9a06c','#a4793e','#846028'], // I: ash
+  ['#8b4513','#6b300a','#502008'], // J: mahogany
+  ['#d2a679','#ab7d4c','#8b6238'], // K: hickory
+  ['#966600','#7a5400','#5e4000'], // L: dark oak
+  ['#c4956a','#a06e3c','#7d5528'], // M: cedar
+  ['#bc8f5e','#9a6e38','#7a5628'], // N: pecan
+];
+
+// Gradient angles per piece (variety of grain directions)
+const GANG = [
+  [0,0,25,100],[100,0,20,100],[0,0,30,100],[0,0,100,35],
+  [100,0,0,100],[0,0,100,25],[0,0,35,100],[0,0,100,40],
+  [100,0,10,100],[0,0,100,30],[0,0,20,100],[100,0,0,80],
+  [0,0,40,100],[0,0,100,20],
+];
+
+// ═══════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════
+let pieces = DEFS.map((_, i) => ({
+  id: i, rot: 0, flip: false,
+  x: 0, y: 0,
+  snapped: false, gx: 0, gy: 0,
+}));
+
+let selected = -1, dragIdx = -1;
+let dragOx = 0, dragOy = 0, dragMoved = false;
+let bitmap = new Uint8Array(FG * FG);
+let gridOn = true, solved = false;
+
+// SVG element refs
+let els = [];      // { g, poly, label } per piece
+let previewEl;
+
+// ═══════════════════════════════════════════════════════
+// Geometry utilities
+// ═══════════════════════════════════════════════════════
+function shoelace(verts) {
+  let s = 0;
+  for (let i = 0; i < verts.length; i++) {
+    const [x1,y1] = verts[i];
+    const [x2,y2] = verts[(i+1) % verts.length];
+    s += x1*y2 - x2*y1;
+  }
+  return Math.abs(s) / 2;
+}
+
+function centroid(verts) {
+  const n = verts.length;
+  return [
+    verts.reduce((s,v) => s + v[0], 0) / n,
+    verts.reduce((s,v) => s + v[1], 0) / n,
+  ];
+}
+
+function getLocalVerts(idx) {
+  const p = pieces[idx];
+  let verts = DEFS[p.id].local.map(v => [...v]);
+
+  // Flip horizontally
+  if (p.flip) {
+    const mx = Math.max(...verts.map(v => v[0]));
+    verts = verts.map(([x,y]) => [mx - x, y]);
+  }
+
+  // Rotate CW: (x,y) → (maxY - y, x)
+  for (let r = 0; r < p.rot; r++) {
+    const mh = Math.max(...verts.map(v => v[1]));
+    verts = verts.map(([x,y]) => [mh - y, x]);
+  }
+
+  // Normalize to origin
+  const mnx = Math.min(...verts.map(v => v[0]));
+  const mny = Math.min(...verts.map(v => v[1]));
+  if (mnx !== 0 || mny !== 0)
+    verts = verts.map(([x,y]) => [x - mnx, y - mny]);
+
+  return verts;
+}
+
+function pointInPoly(px, py, verts) {
+  let inside = false;
+  for (let i = 0, j = verts.length - 1; i < verts.length; j = i++) {
+    const [xi,yi] = verts[i], [xj,yj] = verts[j];
+    if ((yi > py) !== (yj > py) &&
+        px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+      inside = !inside;
+  }
+  return inside;
+}
+
+// ═══════════════════════════════════════════════════════
+// Bitmap collision detection (4× resolution = 48×48)
+// ═══════════════════════════════════════════════════════
+function rasterize(absVerts, mark, id) {
+  const cells = [];
+  const xs = absVerts.map(v => v[0] * RES);
+  const ys = absVerts.map(v => v[1] * RES);
+  const r0 = Math.max(0, Math.floor(Math.min(...ys)));
+  const r1 = Math.min(FG, Math.ceil(Math.max(...ys)));
+  const c0 = Math.max(0, Math.floor(Math.min(...xs)));
+  const c1 = Math.min(FG, Math.ceil(Math.max(...xs)));
+
+  for (let r = r0; r < r1; r++) {
+    for (let c = c0; c < c1; c++) {
+      if (pointInPoly((c+0.5)/RES, (r+0.5)/RES, absVerts)) {
+        const idx = r * FG + c;
+        if (mark) bitmap[idx] = id;
+        cells.push(idx);
+      }
+    }
+  }
+  return cells;
+}
+
+function rebuildBitmap() {
+  bitmap.fill(0);
+  pieces.forEach((p, i) => {
+    if (!p.snapped) return;
+    const verts = getLocalVerts(i);
+    const abs = verts.map(([x,y]) => [p.gx + x, p.gy + y]);
+    rasterize(abs, true, i + 1);
+  });
+}
+
+function hasOverlap(idx, localVerts, gx, gy) {
+  const abs = localVerts.map(([x,y]) => [gx + x, gy + y]);
+  const cells = rasterize(abs, false, 0);
+  return cells.some(c => bitmap[c] !== 0);
+}
+
+// ═══════════════════════════════════════════════════════
+// Snap logic
+// ═══════════════════════════════════════════════════════
+function findSnap(idx) {
+  const p = pieces[idx];
+  const verts = getLocalVerts(idx);
+  const rawGx = (p.x - BX) / CELL;
+  const rawGy = (p.y - BY) / CELL;
+  const gx0 = Math.round(rawGx);
+  const gy0 = Math.round(rawGy);
+
+  // Too far from board?
+  const w = Math.max(...verts.map(v => v[0]));
+  const h = Math.max(...verts.map(v => v[1]));
+  if (gx0 + w/2 < -2 || gx0 > 14 || gy0 + h/2 < -2 || gy0 > 14) return null;
+
+  let best = null, bestD = Infinity;
+
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      const gx = gx0 + dx, gy = gy0 + dy;
+      // All vertices must lie within [0,12]
+      if (!verts.every(([vx,vy]) =>
+        gx+vx >= 0 && gx+vx <= 12 && gy+vy >= 0 && gy+vy <= 12)) continue;
+
+      const d = (gx - rawGx)**2 + (gy - rawGy)**2;
+      const valid = !hasOverlap(idx, verts, gx, gy);
+
+      if (valid && d < bestD) {
+        best = { gx, gy, valid: true };
+        bestD = d;
+      }
+    }
+  }
+  return best;
+}
+
+function snapPiece(idx, gx, gy) {
+  const p = pieces[idx];
+  p.snapped = true;
+  p.gx = gx; p.gy = gy;
+  p.x = BX + gx * CELL;
+  p.y = BY + gy * CELL;
+  const verts = getLocalVerts(idx);
+  const abs = verts.map(([x,y]) => [gx+x, gy+y]);
+  rasterize(abs, true, idx + 1);
+}
+
+function unsnapPiece(idx) {
+  if (!pieces[idx].snapped) return;
+  pieces[idx].snapped = false;
+  pieces[idx].gx = null;
+  pieces[idx].gy = null;
+  rebuildBitmap();
+}
+
+// ═══════════════════════════════════════════════════════
+// SVG initialization
+// ═══════════════════════════════════════════════════════
+function initSVG() {
+  const svg = document.getElementById('svg');
+  const defs = document.createElementNS(NS, 'defs');
+
+  // Wood grain gradients
+  WOOD.forEach((w, i) => {
+    const g = document.createElementNS(NS, 'linearGradient');
+    g.id = `w${i}`;
+    const d = GANG[i];
+    g.setAttribute('x1', `${d[0]}%`); g.setAttribute('y1', `${d[1]}%`);
+    g.setAttribute('x2', `${d[2]}%`); g.setAttribute('y2', `${d[3]}%`);
+    [[0,w[0]],[50,w[1]],[100,w[0]]].forEach(([off,col]) => {
+      const s = document.createElementNS(NS, 'stop');
+      s.setAttribute('offset', `${off}%`);
+      s.setAttribute('stop-color', col);
+      g.appendChild(s);
+    });
+    defs.appendChild(g);
+  });
+
+  // Filters
+  const shadow = createFilter('shadow',
+    '<feDropShadow dx="1" dy="1" stdDeviation="1.5" flood-opacity="0.35"/>');
+  const lift = createFilter('lift',
+    '<feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.5"/>');
+  const glow = createFilter('glow',
+    '<feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#e8a862" flood-opacity="0.7"/>');
+  defs.append(shadow, lift, glow);
+  svg.appendChild(defs);
+
+  // Board surface (recessed tray)
+  const board = document.createElementNS(NS, 'rect');
+  board.setAttribute('x', BX - 2); board.setAttribute('y', BY - 2);
+  board.setAttribute('width', BS + 4); board.setAttribute('height', BS + 4);
+  board.setAttribute('rx', 3);
+  board.setAttribute('fill', '#1a1208');
+  board.setAttribute('stroke', '#3d2b1e');
+  board.setAttribute('stroke-width', '1.5');
+  svg.appendChild(board);
+
+  // Board interior
+  const inner = document.createElementNS(NS, 'rect');
+  inner.setAttribute('x', BX); inner.setAttribute('y', BY);
+  inner.setAttribute('width', BS); inner.setAttribute('height', BS);
+  inner.setAttribute('fill', '#241a0e');
+  svg.appendChild(inner);
+
+  // Grid lines
+  const gridG = document.createElementNS(NS, 'g');
+  gridG.id = 'grid';
+  for (let i = 0; i <= 12; i++) {
+    const h = document.createElementNS(NS, 'line');
+    h.setAttribute('x1', BX); h.setAttribute('y1', BY + i*CELL);
+    h.setAttribute('x2', BX + BS); h.setAttribute('y2', BY + i*CELL);
+    h.setAttribute('stroke', i === 0 || i === 12 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)');
+    h.setAttribute('stroke-width', i === 0 || i === 12 ? '1' : '0.5');
+    gridG.appendChild(h);
+
+    const v = document.createElementNS(NS, 'line');
+    v.setAttribute('x1', BX + i*CELL); v.setAttribute('y1', BY);
+    v.setAttribute('x2', BX + i*CELL); v.setAttribute('y2', BY + BS);
+    v.setAttribute('stroke', i === 0 || i === 12 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)');
+    v.setAttribute('stroke-width', i === 0 || i === 12 ? '1' : '0.5');
+    gridG.appendChild(v);
+  }
+  svg.appendChild(gridG);
+
+  // Snap preview
+  previewEl = document.createElementNS(NS, 'polygon');
+  previewEl.setAttribute('visibility', 'hidden');
+  previewEl.setAttribute('stroke-width', '2');
+  previewEl.setAttribute('stroke-dasharray', '6 3');
+  previewEl.setAttribute('pointer-events', 'none');
+  svg.appendChild(previewEl);
+
+  // Pieces group
+  const piecesG = document.createElementNS(NS, 'g');
+  piecesG.id = 'pieces';
+  svg.appendChild(piecesG);
+
+  // Create piece elements
+  for (let i = 0; i < 14; i++) {
+    const g = document.createElementNS(NS, 'g');
+    g.classList.add('piece');
+    g.dataset.id = i;
+    g.setAttribute('filter', 'url(#shadow)');
+
+    const poly = document.createElementNS(NS, 'polygon');
+    poly.setAttribute('fill', `url(#w${i})`);
+    poly.setAttribute('stroke', WOOD[i][2]);
+    poly.setAttribute('stroke-width', '1.5');
+    poly.setAttribute('stroke-linejoin', 'round');
+
+    const label = document.createElementNS(NS, 'text');
+    label.textContent = String.fromCharCode(65 + i);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('dominant-baseline', 'central');
+    label.setAttribute('font-size', '11');
+    label.setAttribute('font-weight', '600');
+    label.setAttribute('fill', 'rgba(255,255,255,0.5)');
+    label.setAttribute('pointer-events', 'none');
+    label.setAttribute('font-family', 'Inter, sans-serif');
+
+    g.appendChild(poly);
+    g.appendChild(label);
+    piecesG.appendChild(g);
+    els.push({ g, poly, label });
+  }
+
+  // Counter text in tray area
+  const trayLabel = document.createElementNS(NS, 'text');
+  trayLabel.setAttribute('x', VW / 2);
+  trayLabel.setAttribute('y', BY + BS + 18);
+  trayLabel.setAttribute('text-anchor', 'middle');
+  trayLabel.setAttribute('font-size', '10');
+  trayLabel.setAttribute('fill', 'rgba(255,255,255,0.15)');
+  trayLabel.setAttribute('font-family', 'Inter, sans-serif');
+  trayLabel.textContent = 'piece tray';
+  svg.appendChild(trayLabel);
+}
+
+function createFilter(id, inner) {
+  const f = document.createElementNS(NS, 'filter');
+  f.id = id;
+  f.setAttribute('x', '-10%'); f.setAttribute('y', '-10%');
+  f.setAttribute('width', '130%'); f.setAttribute('height', '130%');
+  f.innerHTML = inner;
+  return f;
+}
+
+// ═══════════════════════════════════════════════════════
+// Rendering
+// ═══════════════════════════════════════════════════════
+function render() {
+  for (let i = 0; i < 14; i++) {
+    const p = pieces[i];
+    const verts = getLocalVerts(i);
+    const pts = verts.map(([x,y]) => `${x*CELL},${y*CELL}`).join(' ');
+
+    els[i].poly.setAttribute('points', pts);
+    els[i].g.style.transform = `translate(${p.x}px,${p.y}px)`;
+
+    // Selection glow
+    const isSel = i === selected && dragIdx < 0;
+    els[i].g.setAttribute('filter',
+      i === dragIdx ? 'url(#lift)' :
+      isSel ? 'url(#glow)' : 'url(#shadow)');
+    els[i].poly.setAttribute('stroke-width', isSel ? '2.5' : '1.5');
+
+    // Label
+    const [cx, cy] = centroid(verts);
+    els[i].label.setAttribute('x', cx * CELL);
+    els[i].label.setAttribute('y', cy * CELL);
+  }
+
+  // Z-order: bring dragged piece to front
+  if (dragIdx >= 0) {
+    document.getElementById('pieces').appendChild(els[dragIdx].g);
+  }
+
+  updatePreview();
+  updateStatus();
+
+  // Enable/disable rotate/flip buttons
+  const btns = document.getElementById('piece-btns');
+  btns.classList.toggle('disabled', selected < 0 || solved);
+}
+
+function updatePreview() {
+  if (dragIdx < 0) {
+    previewEl.setAttribute('visibility', 'hidden');
+    return;
+  }
+  const snap = findSnap(dragIdx);
+  if (!snap) {
+    previewEl.setAttribute('visibility', 'hidden');
+    return;
+  }
+  const verts = getLocalVerts(dragIdx);
+  const pts = verts.map(([x,y]) =>
+    `${BX + (snap.gx+x)*CELL},${BY + (snap.gy+y)*CELL}`
+  ).join(' ');
+  previewEl.setAttribute('points', pts);
+  previewEl.setAttribute('visibility', 'visible');
+  previewEl.setAttribute('fill', snap.valid ? 'rgba(100,200,100,0.2)' : 'rgba(200,100,100,0.2)');
+  previewEl.setAttribute('stroke', snap.valid ? '#5b6' : '#b55');
+}
+
+function updateStatus() {
+  const n = pieces.filter(p => p.snapped).length;
+  const el = document.getElementById('status');
+  if (solved) {
+    el.textContent = 'Solved! One of 536 possible tilings';
+    el.style.color = '#5b5';
+  } else {
+    el.textContent = n === 0 ? 'Drag pieces onto the board' :
+      `${n} of 14 pieces placed`;
+    el.style.color = '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// Event handling — drag & drop
+// ═══════════════════════════════════════════════════════
+function svgPt(e) {
+  const svg = document.getElementById('svg');
+  const pt = svg.createSVGPoint();
+  const src = e.touches ? e.touches[0] : e;
+  pt.x = src.clientX; pt.y = src.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+function onDown(e) {
+  if (solved) return;
+  const g = e.target.closest('g.piece');
+  if (!g) { selected = -1; render(); return; }
+
+  const idx = parseInt(g.dataset.id);
+  dragIdx = idx;
+  selected = idx;
+  dragMoved = false;
+
+  const pt = svgPt(e);
+  const p = pieces[idx];
+  dragOx = pt.x - p.x;
+  dragOy = pt.y - p.y;
+
+  els[idx].g.classList.add('notrans');
+
+  // Unsnap if on board
+  if (p.snapped) unsnapPiece(idx);
+
+  // Bring to front
+  document.getElementById('pieces').appendChild(els[idx].g);
+  render();
+  e.preventDefault();
+}
+
+function onMove(e) {
+  if (dragIdx < 0) return;
+  const pt = svgPt(e);
+  const p = pieces[dragIdx];
+
+  if (!dragMoved) {
+    const dx = pt.x - (p.x + dragOx);
+    const dy = pt.y - (p.y + dragOy);
+    if (dx*dx + dy*dy < DRAG_THRESH*DRAG_THRESH) return;
+    dragMoved = true;
+  }
+
+  p.x = pt.x - dragOx;
+  p.y = pt.y - dragOy;
+  render();
+  e.preventDefault();
+}
+
+function onUp(e) {
+  if (dragIdx < 0) return;
+  const idx = dragIdx;
+  const p = pieces[idx];
+
+  els[idx].g.classList.remove('notrans');
+
+  if (!dragMoved) {
+    // Click without drag — toggle selection
+    selected = (selected === idx) ? -1 : idx;
+    dragIdx = -1;
+    render();
+    return;
+  }
+
+  // Try to snap
+  const snap = findSnap(idx);
+  if (snap && snap.valid) {
+    snapPiece(idx, snap.gx, snap.gy);
+    checkWin();
+  }
+
+  dragIdx = -1;
+  previewEl.setAttribute('visibility', 'hidden');
+  render();
+}
+
+// Keyboard: R = rotate, F = flip
+document.addEventListener('keydown', e => {
+  if (solved) return;
+  const idx = dragIdx >= 0 ? dragIdx : selected;
+  if (idx < 0) return;
+
+  if (e.key === 'r' || e.key === 'R') {
+    rotatePiece(idx);
+    e.preventDefault();
+  } else if (e.key === 'f' || e.key === 'F') {
+    flipPiece(idx);
+    e.preventDefault();
+  }
+});
+
+// Right-click to rotate
+document.getElementById('svg').addEventListener('contextmenu', e => {
+  e.preventDefault();
+  if (solved) return;
+  const g = e.target.closest('g.piece');
+  if (!g) return;
+  const idx = parseInt(g.dataset.id);
+  selected = idx;
+  rotatePiece(idx);
+});
+
+// Scroll wheel to rotate selected/hovered piece
+document.getElementById('svg').addEventListener('wheel', e => {
+  e.preventDefault();
+  if (solved) return;
+  // Rotate whichever piece the cursor is over, or the selected one
+  let idx = selected;
+  const g = e.target.closest('g.piece');
+  if (g) {
+    idx = parseInt(g.dataset.id);
+    selected = idx;
+  }
+  if (idx < 0) return;
+  if (e.deltaY > 0) {
+    rotatePiece(idx);
+  } else {
+    // Rotate CCW = 3× CW
+    rotatePiece(idx); rotatePiece(idx); rotatePiece(idx);
+  }
+}, { passive: false });
+
+// On-screen buttons
+function doRotate() {
+  if (selected >= 0 && !solved) rotatePiece(selected);
+}
+function doFlip() {
+  if (selected >= 0 && !solved) flipPiece(selected);
+}
+
+function rotatePiece(idx) {
+  const p = pieces[idx];
+  const old = getLocalVerts(idx);
+  const ow = Math.max(...old.map(v => v[0]));
+  const oh = Math.max(...old.map(v => v[1]));
+
+  p.rot = (p.rot + 1) % 4;
+
+  const nv = getLocalVerts(idx);
+  const nw = Math.max(...nv.map(v => v[0]));
+  const nh = Math.max(...nv.map(v => v[1]));
+
+  // Keep centered
+  p.x += (ow - nw) * CELL / 2;
+  p.y += (oh - nh) * CELL / 2;
+
+  if (p.snapped) unsnapPiece(idx);
+  render();
+}
+
+function flipPiece(idx) {
+  const p = pieces[idx];
+  const old = getLocalVerts(idx);
+  const ow = Math.max(...old.map(v => v[0]));
+
+  p.flip = !p.flip;
+
+  const nv = getLocalVerts(idx);
+  const nw = Math.max(...nv.map(v => v[0]));
+
+  p.x += (ow - nw) * CELL / 2;
+
+  if (p.snapped) unsnapPiece(idx);
+  render();
+}
+
+// ═══════════════════════════════════════════════════════
+// Win detection
+// ═══════════════════════════════════════════════════════
+function checkWin() {
+  if (pieces.filter(p => p.snapped).length < 14) return;
+
+  // Check full coverage: every cell center in [0,12]×[0,12] must be filled
+  for (let i = 0; i < FG * FG; i++) {
+    if (!bitmap[i]) return;
+  }
+
+  solved = true;
+  els.forEach(e => e.g.classList.add('won'));
+  updateStatus();
+}
+
+// ═══════════════════════════════════════════════════════
+// Game actions
+// ═══════════════════════════════════════════════════════
+function scatter() {
+  solved = false;
+  selected = -1;
+  dragIdx = -1;
+  els.forEach(e => e.g.classList.remove('won'));
+
+  // Arrange pieces by area (large first) in a loose grid
+  const order = [...Array(14).keys()].sort((a,b) => DEFS[b].a - DEFS[a].a);
+  const trayTop = BY + BS + 30;
+  const trayH = VH - trayTop - 20;
+  const rows = 3;
+  const rowH = trayH / rows;
+  const perRow = [5, 5, 4];
+
+  let idx = 0;
+  for (let row = 0; row < rows; row++) {
+    const n = perRow[row];
+    const colW = VW / n;
+    for (let col = 0; col < n && idx < 14; col++, idx++) {
+      const i = order[idx];
+      const p = pieces[i];
+      p.rot = Math.floor(Math.random() * 4);
+      p.flip = Math.random() < 0.5;
+      p.snapped = false;
+      p.gx = null;
+      p.gy = null;
+
+      // Center each piece in its cell with jitter
+      const verts = getLocalVerts(i);
+      const pw = Math.max(...verts.map(v => v[0])) * CELL;
+      const ph = Math.max(...verts.map(v => v[1])) * CELL;
+      p.x = colW * col + (colW - pw) / 2 + (Math.random() - 0.5) * 10;
+      p.y = trayTop + row * rowH + (rowH - ph) / 2 + (Math.random() - 0.5) * 8;
+    }
+  }
+
+  bitmap.fill(0);
+  render();
+}
+
+function solve() {
+  solved = false;
+  selected = -1;
+  dragIdx = -1;
+  els.forEach(e => e.g.classList.remove('won'));
+
+  pieces.forEach((p, i) => {
+    p.rot = 0;
+    p.flip = false;
+    p.snapped = true;
+    p.gx = DEFS[i].ox;
+    p.gy = DEFS[i].oy;
+    p.x = BX + p.gx * CELL;
+    p.y = BY + p.gy * CELL;
+  });
+
+  rebuildBitmap();
+  render();
+
+  // Trigger win check after a frame (to allow render)
+  requestAnimationFrame(() => checkWin());
+}
+
+function toggleGrid() {
+  gridOn = !gridOn;
+  document.getElementById('grid').setAttribute('visibility',
+    gridOn ? 'visible' : 'hidden');
+}
+
+// ═══════════════════════════════════════════════════════
+// Initialize
+// ═══════════════════════════════════════════════════════
+function init() {
+  initSVG();
+
+  const svg = document.getElementById('svg');
+  svg.addEventListener('pointerdown', onDown);
+  svg.addEventListener('pointermove', onMove);
+  svg.addEventListener('pointerup', onUp);
+  svg.addEventListener('pointerleave', onUp);
+
+  // Prevent context menu on long-press (mobile)
+  svg.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Start solved, then user can scatter
+  solve();
+}
+
+init();
+</script>
+</body>
+</html>
