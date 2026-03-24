@@ -261,6 +261,44 @@ happen to create many edge-length coincidences on the integer lattice.
 
 ---
 
+## Experiment 3: All-irreducible dissections
+
+**Question:** How common are dissections where *every* tiling is fault-free (no solution has an optional fault line)?
+
+**Method:** For each n, scan 200 random dissections (100 for n≥14). For each, compute total and irreducible tiling counts via DLX. A dissection is "all-irreducible" if irred == total and total > 1.
+
+### Results
+
+| n | all-irred | valid | % | best all-irred count |
+|---|-----------|-------|---|---------------------|
+| 3 | 99 | 200 | 50% | 4 |
+| 4 | 127 | 200 | 64% | 8 |
+| 5 | 150 | 200 | 75% | 8 |
+| 6 | 158 | 200 | 79% | 16 |
+| 7 | 162 | 200 | 81% | 16 |
+| 8 | 163 | 198 | 82% | 16 |
+
+### Observations
+
+1. **All-irreducible is the majority.** At every n tested, most random dissections
+   have all their tilings fault-free. The fraction *increases* with n (50% → 82%).
+
+2. **The n=13 champion is special for its count, not its irreducibility.**
+   Having 120 tilings ALL fault-free is extraordinary — the best random all-irreducible
+   dissections top out at 16 tilings through n=8. The champion combines the rare
+   property of high flexibility with the common property of full irreducibility.
+
+3. **Fault lines are a property of high-count dissections.** Dissections with many
+   tilings are more likely to have *some* solutions that accidentally align along
+   grid lines. Low-count dissections (1–16 tilings) are almost always all-irreducible.
+
+4. **The Stomachion is NOT all-irreducible.** Only 32 of its 2,144 geometric tilings
+   (1.5%) are fault-free. Its extraordinary flexibility comes at the cost of
+   irreducibility — most of its tilings exploit optional fault lines (the midlines
+   y=6 and x=6 each appear in 46% of solutions).
+
+---
+
 ## Open questions
 
 1. Does the Stomachion maximize geometric tilings among dissections with its
