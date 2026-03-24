@@ -96,6 +96,67 @@ g.piece.selected polygon { stroke-width: 2.5; }
 g.piece polygon { transition: stroke-width 0.15s; }
 @keyframes victory { 0%,100%{filter:drop-shadow(0 0 4px rgba(232,168,98,0.3))} 50%{filter:drop-shadow(0 0 12px rgba(232,168,98,0.8))} }
 g.piece.won { animation: victory 2s ease-in-out infinite; }
+
+/* Histogram section */
+.hist-section {
+  margin-top: 32px; width: min(95vw, 620px);
+  text-align: center;
+}
+.hist-section h2 {
+  font-size: 1.3em; font-weight: 700; color: var(--accent-gold);
+  letter-spacing: 1px; margin-bottom: 6px;
+}
+.hist-intro {
+  font-size: 0.82em; color: var(--text-dim); line-height: 1.5;
+  margin-bottom: 14px;
+}
+.hist-intro em { color: var(--text); font-style: normal; font-weight: 600; }
+.hist-controls {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-bottom: 10px;
+}
+.hist-controls label {
+  font-size: 0.85em; color: var(--text-dim); font-weight: 600;
+}
+.n-tabs { display: flex; gap: 4px; }
+.n-tabs button {
+  background: linear-gradient(135deg, #3d2b1e, #2e1f15);
+  color: var(--text-dim); border: 1px solid rgba(255,255,255,0.08);
+  padding: 5px 12px; border-radius: 5px; cursor: pointer;
+  font-family: inherit; font-size: 0.85em; font-weight: 600;
+  transition: all 0.15s;
+}
+.n-tabs button:hover {
+  border-color: var(--accent-amber); color: var(--text);
+}
+.n-tabs button.active {
+  background: linear-gradient(135deg, #5a4530, #4a3525);
+  border-color: var(--accent-amber); color: var(--accent-gold);
+}
+.hist-stats {
+  font-size: 0.8em; color: var(--text-dim); margin-bottom: 8px;
+  min-height: 1.2em;
+}
+.hist-stats b { color: var(--text); }
+.hist-frame {
+  padding: 12px;
+  background: linear-gradient(135deg, #4a3525, #3d2b1e 40%, #2e1f15 70%, #3d2b1e);
+  border-radius: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.6), 0 12px 40px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.hist-frame svg { width: 100%; height: auto; display: block; }
+.hist-legend {
+  display: flex; gap: 20px; justify-content: center;
+  margin-top: 10px; font-size: 0.8em; color: var(--text-dim);
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.swatch {
+  display: inline-block; width: 14px; height: 10px; border-radius: 2px;
+}
+.swatch-total { background: var(--accent-amber); }
+.swatch-irred { background: #6ba37a; }
 </style>
 </head>
 <body>
@@ -115,6 +176,30 @@ g.piece.won { animation: victory 2s ease-in-out infinite; }
   <button onclick="toggleGrid()">Grid</button>
 </div>
 <p class="hint">drag to place &middot; <b>R</b> = rotate &middot; <b>F</b> = flip &middot; scroll wheel or right-click also rotate</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- Histogram section                                      -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="hist-section">
+  <h2>How special is the Stomachion?</h2>
+  <p class="hist-intro">
+    For random <em>n</em>-piece lattice dissections of a 12&times;12 square, most have very few tilings.
+    The Stomachion's 536 (or 2,144 geometric) solutions is extraordinary.
+    <br><b>Total</b> = all geometric tilings &middot; <b>Irreducible</b> = tilings with no fault lines
+  </p>
+  <div class="hist-controls">
+    <label>Pieces (n):</label>
+    <div class="n-tabs" id="n-tabs"></div>
+  </div>
+  <div class="hist-stats" id="hist-stats"></div>
+  <div class="hist-frame">
+    <svg id="hist-svg" viewBox="0 0 560 300" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+  <div class="hist-legend">
+    <span class="legend-item"><span class="swatch swatch-total"></span> Total solutions</span>
+    <span class="legend-item"><span class="swatch swatch-irred"></span> Irreducible solutions</span>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -859,6 +944,202 @@ function init() {
 }
 
 init();
+
+// ═══════════════════════════════════════════════════════
+// Histogram visualization
+// ═══════════════════════════════════════════════════════
+
+const HIST_DATA = {
+  // Total geometric solutions per dissection (from 500 random seeds per n)
+  total: {
+    3: {1:222, 2:252, 3:1, 4:25},
+    4: {1:146, 2:265, 4:71, 8:10, 12:1, 16:5, 24:1},
+    5: {1:98, 2:271, 4:101, 6:1, 8:11, 12:1, 16:12, 24:4},
+    6: {1:60, 2:253, 4:132, 6:1, 8:23, 12:3, 16:12, 24:11, 32:1, 40:1, 72:1},
+    7: {1:43, 2:231, 4:152, 6:3, 8:31, 12:1, 16:15, 24:12, 32:6, 40:1, 64:1, 336:1},
+    8: {1:28, 2:199, 3:1, 4:174, 6:2, 8:40, 12:2, 16:16, 24:16, 32:9, 40:1, 48:2, 64:2, 192:1, 336:1},
+    9: {1:19, 2:175, 3:1, 4:184, 6:5, 8:46, 12:2, 16:15, 18:1, 24:15, 26:1, 32:14, 40:1, 48:4, 64:2, 96:2, 192:1, 336:1},
+    10:{1:14, 2:145, 3:1, 4:187, 6:1, 8:56, 12:2, 16:24, 18:1, 24:14, 26:1, 32:17, 40:1, 48:6, 64:2, 72:1, 96:2, 192:2, 336:1},
+  },
+  // Irreducible (fault-free) solutions — placeholder, will be filled from experiment
+  irred: {
+    3: {},
+    4: {},
+    5: {},
+    6: {},
+    7: {},
+    8: {},
+    9: {},
+    10:{},
+  },
+};
+
+let histN = 7;
+
+function initHist() {
+  const tabs = document.getElementById('n-tabs');
+  for (let n = 3; n <= 10; n++) {
+    const btn = document.createElement('button');
+    btn.textContent = n;
+    btn.onclick = () => { histN = n; renderHist(); };
+    tabs.appendChild(btn);
+  }
+  renderHist();
+}
+
+function renderHist() {
+  // Update tab styles
+  const tabs = document.getElementById('n-tabs').children;
+  for (const btn of tabs) {
+    btn.classList.toggle('active', parseInt(btn.textContent) === histN);
+  }
+
+  const svg = document.getElementById('hist-svg');
+  svg.innerHTML = '';
+
+  const totalDist = HIST_DATA.total[histN] || {};
+  const irredDist = HIST_DATA.irred[histN] || {};
+
+  // Merge all bucket keys
+  const allKeys = new Set([...Object.keys(totalDist), ...Object.keys(irredDist)]);
+  const buckets = [...allKeys].map(Number).sort((a, b) => a - b);
+
+  if (buckets.length === 0) return;
+
+  // Chart dimensions
+  const pad = { top: 20, right: 20, bottom: 45, left: 50 };
+  const W = 560, H = 300;
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  // Find max frequency
+  const maxFreq = Math.max(
+    ...buckets.map(k => totalDist[k] || 0),
+    ...buckets.map(k => irredDist[k] || 0),
+    1
+  );
+
+  // Use log-spaced positions for x-axis since values span 1-336
+  const barW = Math.min(cw / buckets.length - 2, 40);
+  const gap = (cw - barW * buckets.length) / (buckets.length + 1);
+  const xOf = (i) => pad.left + gap + i * (barW + gap);
+  const yOf = (v) => pad.top + ch - (v / maxFreq) * ch;
+
+  // Background
+  const bg = document.createElementNS(NS, 'rect');
+  bg.setAttribute('x', pad.left); bg.setAttribute('y', pad.top);
+  bg.setAttribute('width', cw); bg.setAttribute('height', ch);
+  bg.setAttribute('fill', '#1a1208'); bg.setAttribute('rx', 4);
+  svg.appendChild(bg);
+
+  // Gridlines
+  const nLines = 5;
+  for (let i = 0; i <= nLines; i++) {
+    const v = (maxFreq / nLines) * i;
+    const y = yOf(v);
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', pad.left); line.setAttribute('x2', W - pad.right);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+    line.setAttribute('stroke-width', '0.5');
+    svg.appendChild(line);
+
+    if (i > 0) {
+      const lbl = document.createElementNS(NS, 'text');
+      lbl.setAttribute('x', pad.left - 6); lbl.setAttribute('y', y + 3);
+      lbl.setAttribute('text-anchor', 'end');
+      lbl.setAttribute('font-size', '9'); lbl.setAttribute('fill', 'rgba(255,255,255,0.3)');
+      lbl.setAttribute('font-family', 'Inter, sans-serif');
+      lbl.textContent = Math.round(v);
+      svg.appendChild(lbl);
+    }
+  }
+
+  // Y-axis label
+  const yLabel = document.createElementNS(NS, 'text');
+  yLabel.setAttribute('x', 12); yLabel.setAttribute('y', pad.top + ch / 2);
+  yLabel.setAttribute('text-anchor', 'middle'); yLabel.setAttribute('font-size', '9');
+  yLabel.setAttribute('fill', 'rgba(255,255,255,0.35)');
+  yLabel.setAttribute('font-family', 'Inter, sans-serif');
+  yLabel.setAttribute('transform', `rotate(-90, 12, ${pad.top + ch / 2})`);
+  yLabel.textContent = 'number of dissections';
+  svg.appendChild(yLabel);
+
+  // X-axis label
+  const xLabel = document.createElementNS(NS, 'text');
+  xLabel.setAttribute('x', pad.left + cw / 2); xLabel.setAttribute('y', H - 4);
+  xLabel.setAttribute('text-anchor', 'middle'); xLabel.setAttribute('font-size', '9');
+  xLabel.setAttribute('fill', 'rgba(255,255,255,0.35)');
+  xLabel.setAttribute('font-family', 'Inter, sans-serif');
+  xLabel.textContent = 'geometric solutions';
+  svg.appendChild(xLabel);
+
+  const hasIrred = buckets.some(k => (irredDist[k] || 0) > 0);
+  const halfBar = hasIrred ? barW / 2 - 1 : barW;
+
+  // Draw bars
+  buckets.forEach((k, i) => {
+    const tv = totalDist[k] || 0;
+    const iv = irredDist[k] || 0;
+    const x = xOf(i);
+
+    // Total bar
+    if (tv > 0) {
+      const rect = document.createElementNS(NS, 'rect');
+      rect.setAttribute('x', hasIrred ? x : x);
+      rect.setAttribute('y', yOf(tv));
+      rect.setAttribute('width', hasIrred ? halfBar : barW);
+      rect.setAttribute('height', (tv / maxFreq) * ch);
+      rect.setAttribute('fill', '#d4915e');
+      rect.setAttribute('rx', 1.5);
+      rect.setAttribute('opacity', '0.85');
+      svg.appendChild(rect);
+    }
+
+    // Irreducible bar
+    if (iv > 0) {
+      const rect = document.createElementNS(NS, 'rect');
+      rect.setAttribute('x', x + halfBar + 2);
+      rect.setAttribute('y', yOf(iv));
+      rect.setAttribute('width', halfBar);
+      rect.setAttribute('height', (iv / maxFreq) * ch);
+      rect.setAttribute('fill', '#6ba37a');
+      rect.setAttribute('rx', 1.5);
+      rect.setAttribute('opacity', '0.85');
+      svg.appendChild(rect);
+    }
+
+    // X-axis tick label
+    const lbl = document.createElementNS(NS, 'text');
+    lbl.setAttribute('x', x + (hasIrred ? barW / 2 : barW / 2));
+    lbl.setAttribute('y', pad.top + ch + 14);
+    lbl.setAttribute('text-anchor', 'middle');
+    lbl.setAttribute('font-size', buckets.length > 12 ? '7' : '8.5');
+    lbl.setAttribute('fill', 'rgba(255,255,255,0.4)');
+    lbl.setAttribute('font-family', 'Inter, sans-serif');
+    lbl.textContent = k;
+    svg.appendChild(lbl);
+  });
+
+  // Stats line
+  const totalN = Object.values(totalDist).reduce((s, v) => s + v, 0);
+  const irredN = Object.values(irredDist).reduce((s, v) => s + v, 0);
+  const totalMean = totalN > 0
+    ? Object.entries(totalDist).reduce((s, [k, v]) => s + Number(k) * v, 0) / totalN
+    : 0;
+  const totalMax = buckets.length > 0 ? Math.max(...buckets.filter(k => totalDist[k])) : 0;
+
+  let statsText = `<b>${totalN}</b> random ${histN}-piece dissections`;
+  statsText += ` · mean <b>${totalMean.toFixed(1)}</b> solutions`;
+  statsText += ` · max <b>${totalMax}</b>`;
+  if (irredN > 0) {
+    const irredMean = Object.entries(irredDist).reduce((s, [k, v]) => s + Number(k) * v, 0) / irredN;
+    statsText += ` · irreducible mean <b>${irredMean.toFixed(1)}</b>`;
+  }
+  document.getElementById('hist-stats').innerHTML = statsText;
+}
+
+initHist();
 </script>
 </body>
 </html>
