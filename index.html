@@ -175,7 +175,7 @@ g.piece.won { animation: victory 2s ease-in-out infinite; }
   <button onclick="solve()">Solve</button>
   <button onclick="toggleGrid()">Grid</button>
 </div>
-<p class="hint">drag to place &middot; <b>R</b> = rotate &middot; <b>F</b> = flip &middot; scroll wheel or right-click also rotate</p>
+<p class="hint">drag to place &middot; <b>R</b> = rotate &middot; <b>F</b> = flip &middot; right-click also rotates</p>
 
 <!-- ═══════════════════════════════════════════════════════ -->
 <!-- Histogram section                                      -->
@@ -183,8 +183,8 @@ g.piece.won { animation: victory 2s ease-in-out infinite; }
 <div class="hist-section">
   <h2>How special is the Stomachion?</h2>
   <p class="hist-intro">
-    For random <em>n</em>-piece lattice dissections of a 12&times;12 square, most have very few tilings.
-    The Stomachion's 536 (or 2,144 geometric) solutions is extraordinary.
+    A small sample of random <em>n</em>-piece lattice dissections of a 12&times;12 square (100&ndash;500 trials per <em>n</em>).
+    Most have very few tilings. The Stomachion's 536 (or 2,144 geometric) solutions is extraordinary.
     <br><b>Total</b> = all geometric tilings &middot; <b>Irreducible</b> = tilings with no fault lines
   </p>
   <div class="hist-controls">
@@ -292,8 +292,6 @@ let selected = -1, dragIdx = -1;
 let dragOx = 0, dragOy = 0, dragMoved = false;
 let bitmap = new Uint8Array(FG * FG);
 let gridOn = true, solved = false;
-let wheelAccum = 0;
-const WHEEL_THRESH = 60;
 
 // SVG element refs
 let els = [];      // { g, poly, label } per piece
@@ -770,27 +768,7 @@ document.getElementById('svg').addEventListener('contextmenu', e => {
   rotatePiece(idx);
 });
 
-// Scroll wheel to rotate selected/hovered piece (disabled during drag)
-document.getElementById('svg').addEventListener('wheel', e => {
-  e.preventDefault();
-  if (solved || dragIdx >= 0) return;
-  let idx = selected;
-  const g = e.target.closest('g.piece');
-  if (g) {
-    idx = parseInt(g.dataset.id);
-    selected = idx;
-  }
-  if (idx < 0) return;
-  wheelAccum += e.deltaY;
-  if (Math.abs(wheelAccum) >= WHEEL_THRESH) {
-    if (wheelAccum > 0) {
-      rotatePiece(idx);
-    } else {
-      rotatePiece(idx); rotatePiece(idx); rotatePiece(idx);
-    }
-    wheelAccum = 0;
-  }
-}, { passive: false });
+// Scroll/trackpad: always allow native scrolling (rotation via R key or right-click)
 
 // On-screen buttons
 function doRotate() {
@@ -1148,7 +1126,7 @@ function renderHist() {
 
   let statsText = `<b>${totalN}</b> random ${histN}-piece dissections`;
   statsText += ` · mean <b>${totalMean.toFixed(1)}</b> solutions`;
-  statsText += ` · max <b>${totalMax}</b>`;
+  statsText += ` · sample max <b>${totalMax}</b>`;
   if (irredN > 0) {
     const irredMean = Object.entries(irredDist).reduce((s, [k, v]) => s + Number(k) * v, 0) / irredN;
     statsText += ` · irreducible mean <b>${irredMean.toFixed(1)}</b>`;

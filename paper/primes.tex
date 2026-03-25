@@ -553,8 +553,8 @@ role of fault-line-mediated flexibility.
     convex lattice dissections of the $12 \times 12$ square ($n = 3$ to
     $16$; $100$--$500$ trials per~$n$). Amber bars: total geometric
     tilings. Green bars: irreducible (fault-free) tilings only.
-    The $n = 14$ panel (Stomachion's piece count, highlighted) shows a
-    maximum of~$128$ from random sampling---the Stomachion's $2{,}144$ is
+    The $n = 14$ panel (Stomachion's piece count, highlighted) shows
+    random sampling peaking at~$128$---the Stomachion's $2{,}144$ is
     completely off the chart. Note the concentration on powers of two
     and the growing gap between total and irreducible counts.}
   \label{fig:histograms}
@@ -810,13 +810,47 @@ Our random search found an $n = 13$ prime dissection
 tilings modulo~$\D_4$---all of them fault-free. This dissection is
 $100\%$ irreducible: none of its solutions admit any optional fault line.
 
-Surprisingly, this property is not rare. A scan of $200$ random
-dissections at each~$n$ reveals that \emph{most} random dissections
-are all-irreducible: the fraction rises from $50\%$ at $n = 3$
-to $82\%$ at $n = 8$. What makes the $n = 13$ champion remarkable
-is not its irreducibility (which is generic) but achieving $120$
-tilings while maintaining it. The best all-irreducible dissections
-found by random search top out at $16$~tilings for $n \leq 8$.
+Surprisingly, this property is not rare. Table~\ref{tab:allirred}
+shows that \emph{most} random dissections are all-irreducible at
+every~$n$, with the fraction stabilising around $80\%$ from $n = 6$
+onward. What makes the $n = 13$ champion remarkable is not its
+irreducibility (which is generic) but achieving $120$~tilings while
+maintaining it. The best all-irreducible dissection found by random
+search grows slowly from $4$ ($n = 3$) to $96$ ($n = 14$--$16$).
+
+\begin{table}[ht]
+\centering
+\caption{Prevalence of all-irreducible dissections (every tiling
+  fault-free) among random $n$-piece convex lattice dissections.
+  The fraction is stable at ${\sim}80\%$ for $n \geq 6$, showing
+  that full irreducibility is the generic condition.
+  The best all-irreducible count grows far more slowly than the
+  total maximum (cf.\ Table~\ref{tab:distribution}).}
+\label{tab:allirred}
+\medskip
+\begin{tabular}{@{}c r r r r@{}}
+\toprule
+$n$ & All-irred.\ & Valid & Fraction & Best count \\
+\midrule
+ 3 &  99 & 200 & 50\% &  4 \\
+ 4 & 127 & 200 & 64\% &  8 \\
+ 5 & 150 & 200 & 75\% &  8 \\
+ 6 & 158 & 200 & 79\% & 16 \\
+ 7 & 162 & 200 & 81\% & 16 \\
+ 8 & 163 & 198 & 82\% & 16 \\
+ 9 & 164 & 195 & 84\% & 16 \\
+10 & 156 & 191 & 82\% & 48 \\
+11 & 154 & 189 & 81\% & 48 \\
+12 & 151 & 187 & 81\% & 48 \\
+13 & 148 & 186 & 80\% & 64 \\
+14 &  74 &  91 & 81\% & 96 \\
+15 &  73 &  89 & 82\% & 96 \\
+16 &  69 &  86 & 80\% & 96 \\
+\midrule
+14${}^\star$ & \multicolumn{2}{c}{Stomachion} & 1.5\% & 32 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 On the irreducible metric alone, this champion surpasses the Stomachion
 ($120 > 32$). However, it falls short on every other measure of puzzle
